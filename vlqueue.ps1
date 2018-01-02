@@ -4,8 +4,8 @@
 #Installation Instructions
 
 	#Download the VLCQueue Package, it should include:
-	# Script.ps1
-	# vlcqueue.html
+	# vlqueue.ps1
+	# vlqueue.html
 	# styles.css
 
 #Install PowerShell
@@ -15,22 +15,31 @@
 	#https://www.howtogeek.com/117261/how-to-activate-vlcs-web-interface-control-vlc-from-a-browser-use-any-smartphone-as-a-remote/
 
 #Locate and make a VLCQueue directory under the VLC web interface html folder
-#typically /usr/share/vlc/lua/http
-	# cd /usr/share/vlc/lua/http
-	# sudo mkdir VLCQueue 
-	# sudo chmod 777 VLCQueue
+	#For Linux /usr/share/vlc/lua/http
+		# cd /usr/share/vlc/lua/http
+		# sudo mkdir VLQueue 
+		# sudo chmod 777 VLQueue
+	#For Windows      C:\Program Files\VideoLAN\VLC\lua\http 
+	#For Apple OS X   /Applications/VLC.app/Contents/MacOS/share/lua/http
 
 #backup and Replace index.html
 	#sudo cp index.html index.html.original
-	#sudo cp ~/Downloads/vlcqueue.html index.html
+	#sudo cp ~/Downloads/vlqueue.html index.html
+
+#Update the variables below as needed
+#Run the VLQueue script
+	#cd /home/user/Documents/VLQueue
+	#pwsh vlqueue.ps1
+	#close and restart VLC
+	#Access the web interface at http://localhost:8080
 
 #optionally specify your own CSS on styles.css
-	#create file VLCQueue/styles.css
+	#create file VLQueue/styles.css
 
 #optionally set this script to run on a regular basis
 	#to be completed
 
-$htmldir="/usr/share/vlc/lua/http/VLCQueue"
+$htmldir="/usr/share/vlc/lua/http/VLQueue"
 $XMLfile="$htmldir/playlist.xml"                           
 $Pass="1234"
 $title="Jen's Music Library"
@@ -131,8 +140,8 @@ $oArray | sort-object -property SongName -Culture 'en-US'  | foreach {
 			$top+=$($index.ToCharArray()|foreach { if ($_ -eq $lastChar){"<option value=$_-menu.html selected>Songs that start with $_</option>"} else {"<option value=$_-menu.html>Songs that start with $_</option>" }})
 			$top+="</select></FORM>"
 			
-			$header="<html><head><title>" + $count +" Songs</title>"+$script+"<link rel='stylesheet' href='VLCQueue/styles.css'></head>"
-			$header+="<body>$top<br><table id=tblclass>"
+			$header="<html><head><title>"+ $title + " Songs</title>"+$script+"<link rel='stylesheet' href='VLCQueue/styles.css'></head>"
+			$header+="<body><p class=titleclass>$title - $count song(s)</p><br>$top<br><table id=tblclass>"
 			$footer="</table></body><iframe src='$VLCWebURL' id='commands' style='width:0;height:0;border:0;border:none'></iframe></html>"
 	
 
@@ -157,8 +166,11 @@ $oArray | sort-object -property SongName -Culture 'en-US'  | foreach {
 
 }
 write-host "]"
+write-host "Done :-)"
 
 
+#to be fixed:
+#html files for the are no songs for a specific alphabet letter
 
 
 
