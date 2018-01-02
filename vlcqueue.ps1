@@ -1,15 +1,48 @@
 #This project is WIP
+#v0.3
 
-$XMLfile="/home/luisfeliz/Downloads/playlist.xml"                           
+#Installation Instructions
+
+	#Download the VLCQueue Package, it should include:
+	# Script.ps1
+	# vlcqueue.html
+	# styles.css
+
+#Install PowerShell
+	#https://github.com/PowerShell/PowerShell
+
+#Setup VLC Web Interface and set pass variable below
+	#https://www.howtogeek.com/117261/how-to-activate-vlcs-web-interface-control-vlc-from-a-browser-use-any-smartphone-as-a-remote/
+
+#Locate and make a VLCQueue directory under the VLC web interface html folder
+#typically /usr/share/vlc/lua/http
+	# cd /usr/share/vlc/lua/http
+	# sudo mkdir VLCQueue 
+	# sudo chmod 777 VLCQueue
+
+#backup and Replace index.html
+	#sudo cp index.html index.html.original
+	#sudo cp ~/Downloads/vlcqueue.html index.html
+
+#optionally specify your own CSS on styles.css
+	#create file VLCQueue/styles.css
+
+#optionally set this script to run on a regular basis
+	#to be completed
+
+$htmldir="/usr/share/vlc/lua/http/VLCQueue"
+$XMLfile="$htmldir/playlist.xml"                           
 $Pass="1234"
-$htmldir="/home/luisfeliz/Documents/html"
-$title=""
+$title="Jen's Music Library"
+$VLCWebURL="http://localhost:8080"
+
 
 #Download latest ML list
 write-host "Downloading latest ML List ..."
+invoke-expression "curl -s -u :$pass $VLCWebURL/requests/playlist.xml > $XMLfile"
 
 #Process Media List
-write-host "Reading and processing list ..."
+write-host "Loading Media Library List ..."
 
 $f = [System.Xml.XmltextReader]::Create($XMLfile)
 $f.read() | out-null
@@ -19,9 +52,11 @@ $oArray=@()
 $f.ReadToFollowing("node") | out-null
 
 [xml]$xml=$f.ReadOuterXml()
+$StartNode="/node/node[2]"
 
-     #Take care of the root leafs first
-	$xml.node.node[1].leaf | foreach {
+write-host "Processing Media Library List ..."
+    
+	$xml.selectNodes("$StartNode//leaf") | foreach {
 
 	if ($($_.'name' -notlike "*.cdg*")) {
 	$oarray += new-object PSObject -property ([ordered]@{
@@ -34,56 +69,19 @@ $f.ReadToFollowing("node") | out-null
 	}) #new-object
       }#if
    }#for
-
-
-$level="node"
-
-while ($done -ne $True) {
-
-$done=$true
-
-     #Take care of the root leafs first
-     if ($xml.node.node[1].$level.leaf -ne $null) {
-    write-host " -- Top level"
-	$xml.node.node[1].leaf | foreach {
-
-	if ($($_.'name' -notlike "*.cdg*")) {
-	$oarray += new-object PSObject -property ([ordered]@{
-
-	  #Select-XML allows you to address XML elements as they appear on the file
-	  "SongName"    = $_.'name'
-	  "SongURL"     = $_.'uri'
-	  "SongID"   = $_.'id'
-
-	}) #new-object
-      }#if 
-    }#for
-
-    }#if
-
-    #and now subfolders and their leafs
-    if ($xml.node.node[1].$level -ne $null) {
-	write-host " -- SubFolders"
-	write-host "    -- "+$xml.node.node[1].$level.name
-     $xml.node.node[1].$level.leaf | foreach {
-
-	if ($($_.'name' -notlike "*.cdg*")) {
-	$oarray += new-object PSObject -property ([ordered]@{
-
-	  #Select-XML allows you to address XML elements as they appear on the file
-	  "SongName"    = $_.'name'
-	  "SongURL"     = $_.'uri'
-	  "SongID"   = $_.'id'
-
-	}) #new-object
-      }#if
-     }#for
-    $done=$false
-    }#if
-
-$level=$level+".node"
+<#
+    #and now Sub levels
+    if ($xml.selectNodes("$startnode/$selector/node") -ne $null) {
+		#Ok there are more nodes, so iterate
+		$selector+="/node"
+		ProcessMediaLibraryList -selector $selector
+    }
+	else {
+		#no more nodes, leave
+	}
 	
-}
+#>
+
 
 $count=($oArray | measure-object).count
 write-host "Processed $count item(s)"
@@ -106,15 +104,6 @@ document.getElementById('commands').src="http://localhost:8080/requests/status.x
 
 $index="ABCDEFGHIJKLMNOPQRSTUVWYXZ"
 
-$top="<FORM id=topmenu class=formclass>"
-$top+="<Select id=topmenuselect class=selectclass onChange='javascript:location.href = this.value;'>"
-$top+="<option value='' selected>Select First Letter</option><option value=0-menu.html>Numbers and Symbols</option>"
-$top+=$($index.ToCharArray()|foreach {"<option value=$_-menu.html>$_</option>"})
-$top+="</select></FORM>"
-
-$header="<html><head><title>" + $count +" Songs</title>"+$script+"<link rel='stylesheet' href='styles.css'></head>"
-$header+="<body>$top<br><table id=tblclass>"
-$footer="</table></body><iframe src='' id='commands' style='width:0;height:0;border:0;border:none'></iframe></html>"
 
 
 $HTML=""
@@ -135,6 +124,18 @@ $oArray | sort-object -property SongName -Culture 'en-US'  | foreach {
 		if ($firstChar -ne $lastChar) {
 			#Time to write the file and reset
 			write-host $lastChar -nonewline
+
+			$top="<FORM id=topmenu class=formclass>"
+			$top+="<Select id=topmenuselect class=selectclass onChange='javascript:location.href = this.value;'>"
+			$top+="<option value=''>Select First Letter</option><option value=0-menu.html>Numbers and Symbols</option>"
+			$top+=$($index.ToCharArray()|foreach { if ($_ -eq $lastChar){"<option value=$_-menu.html selected>Songs that start with $_</option>"} else {"<option value=$_-menu.html>Songs that start with $_</option>" }})
+			$top+="</select></FORM>"
+			
+			$header="<html><head><title>" + $count +" Songs</title>"+$script+"<link rel='stylesheet' href='VLCQueue/styles.css'></head>"
+			$header+="<body>$top<br><table id=tblclass>"
+			$footer="</table></body><iframe src='$VLCWebURL' id='commands' style='width:0;height:0;border:0;border:none'></iframe></html>"
+	
+
 			$header+$HTML+$footer | out-file "$htmldir/$lastChar-menu.html"
 			$HTML=""
 			$HTML=$HTML+"<TR class=trclass><TD class=tdclass><A HREF=# onClick=loadurl('"+[System.Web.HttpUtility]::UrlEncode($_.SongURL)+"');>[Queue]</A></TD><TD>"+$_.SongName+"</TD></TR>"
