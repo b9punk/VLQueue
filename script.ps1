@@ -9,7 +9,7 @@ $title=""
 write-host "Downloading latest ML List ..."
 
 #Process Media List
-write-host "Reading and processing list ..." -nonewline
+write-host "Reading and processing list ..."
 
 $f = [System.Xml.XmltextReader]::Create($XMLfile)
 $f.read() | out-null
@@ -44,7 +44,7 @@ $done=$true
 
      #Take care of the root leafs first
      if ($xml.node.node[1].$level.leaf -ne $null) {
-
+    write-host " -- Top level"
 	$xml.node.node[1].leaf | foreach {
 
 	if ($($_.'name' -notlike "*.cdg*")) {
@@ -63,7 +63,8 @@ $done=$true
 
     #and now subfolders and their leafs
     if ($xml.node.node[1].$level -ne $null) {
-	write-host $xml.node.node[1].$level.name
+	write-host " -- SubFolders"
+	write-host "    -- "+$xml.node.node[1].$level.name
      $xml.node.node[1].$level.leaf | foreach {
 
 	if ($($_.'name' -notlike "*.cdg*")) {
@@ -111,7 +112,8 @@ $top+="<option value='' selected>Select First Letter</option><option value=0-men
 $top+=$($index.ToCharArray()|foreach {"<option value=$_-menu.html>$_</option>"})
 $top+="</select></FORM>"
 
-$header="<html><head><title>" + $count +" Songs</title>"+$script+"</head><body>$top<br><table id=tblclass>"
+$header="<html><head><title>" + $count +" Songs</title>"+$script+"<link rel='stylesheet' href='styles.css'></head>"
+$header+="<body>$top<br><table id=tblclass>"
 $footer="</table></body><iframe src='' id='commands' style='width:0;height:0;border:0;border:none'></iframe></html>"
 
 
