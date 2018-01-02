@@ -43,7 +43,10 @@ $htmldir="/usr/share/vlc/lua/http/VLQueue"
 $XMLfile="$htmldir/playlist.xml"                           
 $Pass="1234"
 $title="Jen's Music Library"
-$VLCWebURL="http://localhost:8080"
+
+#Setup a friendly DNS name for easier access
+$VLCWebURL="http://localhost:8080" 
+
 
 
 #Download latest ML list
