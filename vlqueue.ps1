@@ -106,7 +106,7 @@ $script=@"
 
 function loadurl( url) {
 //document.getElementById('commands').src="http://:1234@localhost:8080/requests/status.xml?command=in_enqueue&input="+url
-document.getElementById('commands').src="http://localhost:8080/requests/status.xml?command=in_enqueue&input="+url
+document.getElementById('commands').src="/requests/status.xml?command=in_enqueue&input="+url
 
 }
 
