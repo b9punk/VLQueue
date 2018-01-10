@@ -1,5 +1,5 @@
 #This project is WIP
-#v0.3
+#v1.2
 
 #Installation Instructions
 
@@ -39,10 +39,10 @@
 #optionally set this script to run on a regular basis
 	#to be completed
 
-$htmldir="/usr/share/vlc/lua/http/VLQueue"
+$htmldir="/home/luisfeliz/Documents/upload"
 $XMLfile="$htmldir/playlist.xml"                           
 $Pass="1234"
-$title="Jen's Music Library"
+$title="Karaoke Library"
 
 Write-host "Getting IP address..." -NoNewline
 # Figure out system IP address
@@ -60,7 +60,7 @@ $VLCWebURL="http://" + "$ipinfo" + ":8080"
 
 #Download latest ML list
 write-host "Downloading latest ML List from $VLCwebURL ..."
-#invoke-expression "curl -s -u :$pass $VLCWebURL/requests/playlist.xml > $XMLfile"
+invoke-expression "curl -s -u :$pass $VLCWebURL/requests/playlist.xml > $XMLfile"
 
 #Process Media List
 write-host "Loading Media Library List ..."
@@ -83,7 +83,7 @@ write-host "Processing Media Library List ..."
 	$oarray += new-object PSObject -property ([ordered]@{
 
 	  #Select-XML allows you to address XML elements as they appear on the file
-	  "SongName"    = $_.'name'
+	  "SongName"    = [System.Web.HttpUtility]::UrlDecode((($_.'uri' -split "/")[-1] -replace ".mp3",""))
 	  "SongURL"     = $_.'uri'
 	  "SongID"   = $_.'id'
 
@@ -106,6 +106,7 @@ write-host "Processing Media Library List ..."
 
 $count=($oArray | measure-object).count
 write-host "Processed $count item(s)"
+
 
 # Create Static Pages
 write-host "Create static pages... " -nonewline
@@ -167,6 +168,30 @@ $oArray | sort-object -property SongName -Culture 'en-US'  | foreach {
 	}
 
 }
+write-host ""
+
+
+$ftpscript= @"
+
+#!/bin/bash
+HOST='xxxxxxxxx'
+USER='xxxxxxxx'
+PASSWD='xxxxxxx'
+cd $htmldir
+ftp -p -n -v `$HOST << EOT
+ascii
+user `$USER `$PASSWD
+prompt
+mput *.html
+
+EOT
+
+"@
+
+$ftpscript | out-file $htmldir/ftpscript.sh
+
+Write-host "Running FTP Script ..."
+Invoke-Expression "sh ../upload/ftpscript.sh"
 write-host "]"
 write-host "Done :-)"
 
