@@ -44,23 +44,14 @@ $XMLfile="$htmldir/playlist.xml"
 $Pass="1234"
 $title="Jen's Music Library"
 
-Write-host "Getting IP address..." -NoNewline
-# Figure out system IP address
-
-	if (($psversiontable).os -like "*linux*") {
-		# For Linux
-		$ipinfo=Invoke-Expression "ip addr show | grep 'inet\b' | grep -v '127\|169' | awk '{print `$2}'|cut -d/ -f1"   
-		$ipinfo
-
-	} 	else { # For Windows, needs work $ipcmd="get-netipaddress" 
-			 }
-			 
 #Setup a friendly DNS name for easier access
-$VLCWebURL="http://" + "$ipinfo" + ":8080" 
+$VLCWebURL="http://localhost:8080" 
+
+
 
 #Download latest ML list
-write-host "Downloading latest ML List from $VLCwebURL ..."
-#invoke-expression "curl -s -u :$pass $VLCWebURL/requests/playlist.xml > $XMLfile"
+write-host "Downloading latest ML List ..."
+invoke-expression "curl -s -u :$pass $VLCWebURL/requests/playlist.xml > $XMLfile"
 
 #Process Media List
 write-host "Loading Media Library List ..."
@@ -110,7 +101,17 @@ write-host "Processed $count item(s)"
 # Create Static Pages
 write-host "Create static pages... " -nonewline
 
-$script="<SCRIPT>function loadurl( url) { document.getElementById('commands').src='$vlcweburl/requests/status.xml?command=in_enqueue&input='+url}</SCRIPT>"
+$script=@"
+<SCRIPT>
+
+function loadurl( url) {
+//document.getElementById('commands').src="http://:1234@localhost:8080/requests/status.xml?command=in_enqueue&input="+url
+document.getElementById('commands').src="/requests/status.xml?command=in_enqueue&input="+url
+
+}
+
+</SCRIPT>
+"@
 
 
 $index="ABCDEFGHIJKLMNOPQRSTUVWYXZ"
